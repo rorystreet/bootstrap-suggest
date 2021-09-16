@@ -2,6 +2,12 @@
 * ko.tagContent.js
 * This function allows the use of bootstrap-suggest as a binding handler
 * from within KnockoutJS
+*
+* Ensure you have jquery.caret.js installed
+* Usage <div data-bind="tagContent: {dataList:userList, dataText: 'DisplayOnFrontEnd', dataValue: 'DisplayOnFrontEnd' }" >
+* dataList: Your array of data
+* dataText: field in array object to display
+* dataValue: field in array object to output once selected
 * ===================================================
 * Copyright 2021 
 *
