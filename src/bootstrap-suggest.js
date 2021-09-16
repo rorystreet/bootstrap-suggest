@@ -132,7 +132,12 @@
                     style.overflow = 'hidden';  // for Chrome to not render a scrollbar; IE keeps overflowY = 'scroll'
                 }
 
-                div.textContent = element.value.substring(0, position);
+                if (element.tagName === "DIV") {
+                    div.textContent = element.innerText.substring(0, position);
+                } else {
+                    div.textContent = element.value.substring(0, position);
+                }
+                
                 // the second special handling for input type="text" vs textarea: spaces need to be replaced with non-breaking spaces - http://stackoverflow.com/a/13402035/1269037
                 if (element.nodeName === 'INPUT')
                 div.textContent = div.textContent.replace(/\s/g, "\u00a0");
@@ -143,7 +148,13 @@
                 // The  *only* reliable way to do that is to copy the *entire* rest of the
                 // textarea's content into the <span> created at the caret position.
                 // for inputs, just '.' would be enough, but why bother?
-                span.textContent = element.value.substring(position) || '.';  // || because a completely empty faux span doesn't render at all
+                if (element.tagName === "DIV") {
+                    span.textContent = element.innerText.substring(position);
+                } else {
+                    span.textContent =
+                        element.value.substring(position) ||
+                        '.'; // || because a completely empty faux span doesn't render at all
+                }
                 div.appendChild(span);
 
                 var coordinates = {
@@ -178,6 +189,10 @@
                 val = $el.val(),
                 currentPos = this.__getSelection($el.get(0)).start;
 
+            if ($el.get(0).tagName === "DIV") {
+                val = $el.text();
+            }
+
             for (var i = currentPos; i >= 0; i--) {
                 var subChar = $.trim(val.substring(i-1, i));
                 if (!subChar && this.options.respectWhitespace) {
@@ -209,7 +224,8 @@
                 that.hide();
             }
 
-            $dropdown.on('click', 'a.dropdown-item', function(e) {
+            $dropdown.on('click', 'a.dropdown-item', function (e) {
+                e.isPropagationStopped(); 
                 e.preventDefault();
                 that.__select($(this).index());
                 that.$element.focus();
@@ -297,6 +313,8 @@
                 _item.value = dataItem;
             }
 
+         
+
             return $('<a />', {
                 'class': 'dropdown-item' + ' ' + _item.class,
                 'data-value': _item.value,
@@ -313,8 +331,23 @@
                 item = this.get(index),
                 setCaretPos = this._keyPos + item.value.length + 1;
 
+
+            if ($el.get(0).tagName === "DIV") {
+                val = $el.text();
+            }
+
+
+            if ($el.get(0).tagName === "DIV") {
+                var sliceStart = $el.data("lastOffset");
+
+                var textToSymbol = val.slice(0, this._keyPos) + item.value;
+                $el.text(textToSymbol + ' ' + val.slice(sliceStart));
+
+                $el.caret('pos', textToSymbol.length);
+
+            } else {
                 $el.val(val.slice(0, this._keyPos) + item.value + endKey + ' ' + val.slice(this.__getSelection(el).start));
-                $el.blur();
+            }
 
             if (el.setSelectionRange) {
                 el.setSelectionRange(setCaretPos, setCaretPos);
@@ -327,7 +360,7 @@
             }
 
             $el.trigger($.extend({type: 'suggest.select'}, this), item);
-
+            $el.trigger("change");
             this.hide();
         },
 
@@ -335,9 +368,20 @@
             //in IE9 selectionStart will always be 9 if not focused(when selecting using the mouse)
             el.focus();
 
+            var start, end;
+
+            if (el.tagName === "DIV") {
+                var result = $(el).caret('pos');
+                start = result;
+                end = result;
+            } else {
+                start = el.selectionStart;
+                end = el.selectionEnd;
+            }
+
             return {
-                start: el.selectionStart,
-                end: el.selectionEnd
+                start: start,
+                end: end
             };
         },
 
